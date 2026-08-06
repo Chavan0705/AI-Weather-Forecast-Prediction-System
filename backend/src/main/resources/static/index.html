@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Weather - Live Analytics & ML Prediction System</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Tailwind CSS v3 CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        skyAccent: '#8ee0fb',
+                        oceanAccent: '#71b2e6',
+                        blueAccent: '#4a9beb',
+                        darkNavy: '#0a121e',
+                        cardNavy: 'rgba(16, 27, 45, 0.75)',
+                        borderNavy: 'rgba(142, 224, 251, 0.15)',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'spin-fast': 'spin 0.8s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar & glassmorphism utilities */
+        .glass-panel {
+            background: rgba(16, 27, 45, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(142, 224, 251, 0.15);
+        }
+        .glass-panel:hover {
+            border-color: rgba(142, 224, 251, 0.35);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(142, 224, 251, 0.15);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            height: 6px;
+        }
+        .hide-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(142, 224, 251, 0.25);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-darkNavy text-gray-100 font-sans min-h-screen relative overflow-x-hidden antialiased">
+
+    <!-- Background Ambient Glow Spheres -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div class="absolute -top-32 -left-32 w-[500px] h-[500px] bg-oceanAccent/20 rounded-full blur-[130px]"></div>
+        <div class="absolute -bottom-32 -right-32 w-[550px] h-[550px] bg-skyAccent/20 rounded-full blur-[130px]"></div>
+        <div class="absolute top-1/3 left-1/3 w-[400px] h-[400px] bg-blueAccent/15 rounded-full blur-[120px]"></div>
+    </div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Top Navigation Bar -->
+        <header class="glass-panel rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+            <div class="flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-skyAccent to-oceanAccent flex items-center justify-center text-darkNavy text-xl font-bold shadow-lg shadow-skyAccent/30">
+                    <i class="fa-solid fa-cloud-sun-rain"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                        AI Weather System
+                    </h1>
+                    <p class="text-xs text-gray-400 font-medium">Spring Boot • MySQL • Python ML • Live Forecast</p>
+                </div>
+            </div>
+
+            <!-- Controls & Quick City Badges -->
+            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                <div class="relative flex-1 sm:w-64 bg-darkNavy/80 border border-borderNavy rounded-xl px-3.5 py-2 flex items-center gap-2.5 focus-within:border-skyAccent focus-within:ring-2 focus-within:ring-skyAccent/20 transition-all">
+                    <i class="fa-solid fa-location-dot text-skyAccent text-sm"></i>
+                    <input type="text" id="cityInput" value="Pune" placeholder="Search city..." class="bg-transparent border-none outline-none text-sm text-white w-full placeholder-gray-500">
+                    <button id="searchBtn" title="Fetch City Weather" class="text-gray-400 hover:text-skyAccent transition-colors">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+
+                <button id="fetchBtn" class="bg-gradient-to-r from-skyAccent to-oceanAccent hover:from-skyAccent/90 hover:to-oceanAccent/90 text-darkNavy font-bold text-sm px-4 py-2.5 rounded-xl shadow-lg shadow-skyAccent/25 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-rotate-right" id="fetchIcon"></i>
+                    <span>Sync Live Data</span>
+                </button>
+
+                <button id="retrainBtn" class="bg-oceanAccent/15 hover:bg-oceanAccent/25 text-skyAccent border border-skyAccent/30 font-bold text-sm px-4 py-2.5 rounded-xl hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>Retrain AI</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Quick City Selector Chips -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar text-xs font-semibold">
+            <span class="text-gray-400 font-normal mr-1">Popular Cities:</span>
+            <button class="city-chip bg-cardNavy hover:bg-oceanAccent/20 border border-borderNavy hover:border-skyAccent text-gray-300 hover:text-skyAccent px-3 py-1.5 rounded-lg transition-all" data-city="Pune">📍 Pune</button>
+            <button class="city-chip bg-cardNavy hover:bg-oceanAccent/20 border border-borderNavy hover:border-skyAccent text-gray-300 hover:text-skyAccent px-3 py-1.5 rounded-lg transition-all" data-city="Mumbai">📍 Mumbai</button>
+            <button class="city-chip bg-cardNavy hover:bg-oceanAccent/20 border border-borderNavy hover:border-skyAccent text-gray-300 hover:text-skyAccent px-3 py-1.5 rounded-lg transition-all" data-city="London">📍 London</button>
+            <button class="city-chip bg-cardNavy hover:bg-oceanAccent/20 border border-borderNavy hover:border-skyAccent text-gray-300 hover:text-skyAccent px-3 py-1.5 rounded-lg transition-all" data-city="New York">📍 New York</button>
+            <button class="city-chip bg-cardNavy hover:bg-oceanAccent/20 border border-borderNavy hover:border-skyAccent text-gray-300 hover:text-skyAccent px-3 py-1.5 rounded-lg transition-all" data-city="Tokyo">📍 Tokyo</button>
+            <button class="city-chip bg-cardNavy hover:bg-oceanAccent/20 border border-borderNavy hover:border-skyAccent text-gray-300 hover:text-skyAccent px-3 py-1.5 rounded-lg transition-all" data-city="Dubai">📍 Dubai</button>
+        </div>
+
+        <!-- Status Badges Bar -->
+        <section class="flex flex-wrap items-center gap-3">
+            <div class="glass-panel px-3.5 py-1.5 rounded-full text-xs font-semibold text-emerald-400 border border-emerald-500/30 flex items-center gap-2 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                Spring Boot: <strong class="text-white">Connected</strong>
+            </div>
+            <div class="glass-panel px-3.5 py-1.5 rounded-full text-xs font-semibold text-skyAccent border border-skyAccent/30 flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-database"></i>
+                MySQL DB: <strong class="text-white">Active</strong>
+            </div>
+            <div class="glass-panel px-3.5 py-1.5 rounded-full text-xs font-semibold text-oceanAccent border border-oceanAccent/30 flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-microchip"></i>
+                Python ML: <strong class="text-white">RandomForest Active</strong>
+            </div>
+            <div class="glass-panel px-3.5 py-1.5 rounded-full text-xs font-medium text-gray-400 flex items-center gap-2 ml-auto">
+                <i class="fa-regular fa-clock text-skyAccent"></i>
+                Last Sync: <span id="syncTimestamp" class="text-gray-200">Just now</span>
+            </div>
+        </section>
+
+        <!-- Main Dashboard Content -->
+        <main class="space-y-6">
+            
+            <!-- Hero Live Weather & AI Prediction Card -->
+            <section class="glass-panel rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-cardNavy via-darkNavy/90 to-cardNavy border border-skyAccent/20 shadow-2xl relative overflow-hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 id="cityName" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Pune, India</h2>
+                        <p class="text-xs text-gray-400 mt-1 font-medium" id="currentWeatherDesc">Live Meteorological Metrics & Predictive AI</p>
+                    </div>
+                    <div class="bg-skyAccent/10 border border-skyAccent/30 px-4 py-2 rounded-full flex items-center gap-2.5 text-skyAccent font-bold text-sm">
+                        <i class="fa-solid fa-sun text-lg" id="weatherIcon"></i>
+                        <span id="weatherCondition">Clear Sky</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center pt-2">
+                    <!-- Live Weather Column -->
+                    <div class="space-y-2">
+                        <span class="text-xs font-bold text-gray-400 tracking-wider uppercase flex items-center gap-2">
+                            <i class="fa-solid fa-signal text-skyAccent"></i> Current Live Temperature
+                        </span>
+                        <div class="text-5xl sm:text-6xl font-black text-white tracking-tight flex items-baseline gap-1">
+                            <span id="currentTemp">28.5</span>
+                            <span class="text-2xl font-bold text-gray-400">°C</span>
+                        </div>
+                    </div>
+
+                    <!-- AI Prediction Column -->
+                    <div class="md:border-l md:border-borderNavy md:pl-8 space-y-2">
+                        <div class="flex items-center gap-2 text-xs font-bold text-gray-400 tracking-wider uppercase">
+                            <i class="fa-solid fa-robot text-skyAccent"></i> Next-Hour AI Prediction
+                            <span class="bg-gradient-to-r from-skyAccent to-oceanAccent text-darkNavy font-black px-2 py-0.5 rounded text-[10px]">RandomForest</span>
+                        </div>
+                        <div class="text-5xl sm:text-6xl font-black bg-gradient-to-r from-skyAccent to-oceanAccent bg-clip-text text-transparent tracking-tight flex items-baseline gap-1">
+                            <span id="predictedTemp">30.1</span>
+                            <span class="text-2xl font-bold text-gray-400">°C</span>
+                        </div>
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold mt-2" id="deltaBadge">
+                            <i class="fa-solid fa-arrow-trend-up"></i>
+                            <span id="deltaValue">+1.6°C</span> warmer expected
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Metrics Cards Grid -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- Temperature -->
+                <div class="glass-panel rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-skyAccent/15 text-skyAccent flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-temperature-high"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400 font-medium">Temperature</span>
+                        <h3 class="text-xl font-bold text-white"><span id="metricTemp">28.5</span> °C</h3>
+                        <span class="text-[11px] text-gray-500"><i class="fa-solid fa-circle-check text-emerald-400"></i> Recorded Live</span>
+                    </div>
+                </div>
+
+                <!-- Humidity -->
+                <div class="glass-panel rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-oceanAccent/15 text-oceanAccent flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-droplet"></i>
+                    </div>
+                    <div class="w-full">
+                        <span class="text-xs text-gray-400 font-medium">Relative Humidity</span>
+                        <h3 class="text-xl font-bold text-white"><span id="metricHumidity">65</span> %</h3>
+                        <div class="w-full bg-gray-700/40 h-1.5 rounded-full overflow-hidden mt-1.5">
+                            <div class="bg-gradient-to-r from-skyAccent to-oceanAccent h-full transition-all duration-500" id="humidityProgress" style="width: 65%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pressure -->
+                <div class="glass-panel rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-blueAccent/15 text-blueAccent flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-gauge-high"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400 font-medium">Barometric Pressure</span>
+                        <h3 class="text-xl font-bold text-white"><span id="metricPressure">1012</span> hPa</h3>
+                        <span class="text-[11px] text-gray-500" id="pressureStatus">Normal Atmospheric Level</span>
+                    </div>
+                </div>
+
+                <!-- Wind Velocity -->
+                <div class="glass-panel rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-wind"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400 font-medium">Wind Velocity</span>
+                        <h3 class="text-xl font-bold text-white"><span id="metricWind">8.5</span> km/h</h3>
+                        <span class="text-[11px] text-gray-500" id="windStatus">Gentle Breeze</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 24-Hour Hourly Forecast Panel -->
+            <section class="glass-panel rounded-2xl p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2.5">
+                        <i class="fa-solid fa-clock text-skyAccent"></i> 24-Hour Hourly Forecast & AI Trajectory
+                    </h3>
+                    <span class="bg-skyAccent/15 text-skyAccent text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Hourly Live Feed</span>
+                </div>
+                <div class="flex gap-3.5 overflow-x-auto pb-2 hide-scrollbar scroll-smooth" id="hourlyForecastContainer">
+                    <!-- Dynamic Hourly Cards Injected Here -->
+                </div>
+            </section>
+
+            <!-- 7-Day Daily Forecast & Hourly Breakdown Panel -->
+            <section class="glass-panel rounded-2xl p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2.5">
+                            <i class="fa-solid fa-calendar-days text-oceanAccent"></i> 7-Day Extended Weather Forecast
+                        </h3>
+                        <p class="text-xs text-gray-400 mt-0.5">Click any day card to inspect its 24-hour hourly progression</p>
+                    </div>
+                    <span class="bg-oceanAccent/15 text-oceanAccent text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">7-Day Analysis</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3.5" id="dailyForecastContainer">
+                    <!-- Dynamic Daily Cards Injected Here -->
+                </div>
+            </section>
+
+            <!-- Analytics & Charts Section -->
+            <section class="glass-panel rounded-2xl p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2.5">
+                            <i class="fa-solid fa-chart-line text-skyAccent"></i> Historical Weather & AI Model Trajectory
+                        </h3>
+                        <p class="text-xs text-gray-400 mt-0.5">Real-time trends stored in MySQL database vs. Python ML Predictions</p>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs font-semibold">
+                        <span class="flex items-center gap-2 text-gray-300">
+                            <span class="w-3 h-3 rounded bg-skyAccent inline-block"></span> Actual Temp
+                        </span>
+                        <span class="flex items-center gap-2 text-gray-300">
+                            <span class="w-3 h-3 rounded bg-oceanAccent inline-block"></span> AI Predicted
+                        </span>
+                    </div>
+                </div>
+                <div class="relative h-80 w-full">
+                    <canvas id="weatherChart"></canvas>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="text-center py-6 text-xs text-gray-500 border-t border-borderNavy mt-8">
+            <p>AI Weather Monitoring & Machine Learning Prediction Architecture • Powered by Spring Boot, MySQL, & Scikit-Learn</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

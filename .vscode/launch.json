@@ -1,0 +1,49 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Chrome",
+            "request": "launch",
+            "type": "chrome",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}"
+        },
+        {
+            "name": "Launch Chrome",
+            "request": "launch",
+            "type": "chrome",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}"
+        },
+        {
+            "name": "Launch Chrome",
+            "request": "launch",
+            "type": "chrome",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}"
+        },
+        {
+            "name": "Launch Chrome against localhost",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}/backend/src/main/resources/static"
+        },
+        {
+            "name": "Python ML Service (app.py)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ml_service/app.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/ml_service"
+        },
+        {
+            "name": "Spring Boot Backend (WeatherApplication)",
+            "type": "java",
+            "request": "launch",
+            "mainClass": "com.weather.WeatherApplication",
+            "projectName": "ai-weather-backend",
+            "cwd": "${workspaceFolder}/backend"
+        }
+    ]
+}

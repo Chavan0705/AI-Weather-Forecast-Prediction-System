@@ -1,0 +1,28 @@
+# Java & Spring Boot
+backend/target/
+*.class
+*.jar
+*.war
+.mvn/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+build/
+devel/
+*.egg-info/
+
+# IDE & Editor files
+.idea/
+*.swp
+*.iml
+.DS_Store
+
+# Logs
+*.log
