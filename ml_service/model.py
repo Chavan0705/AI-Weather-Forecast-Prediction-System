@@ -26,7 +26,7 @@ def fetch_data_from_mysql():
         conn = pymysql.connect(
             host="localhost",
             user="root",
-            password="password",
+            password="root123",
             database="weatherdb",
             cursorclass=pymysql.cursors.DictCursor
         )
